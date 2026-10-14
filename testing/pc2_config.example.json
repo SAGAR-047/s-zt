@@ -1,0 +1,10 @@
+{
+  "pc1_api_url": "http://192.168.1.100:5050",
+  "username": "admin",
+  "password": "sentinel-admin-2026",
+  "timeout_seconds": 10,
+  "default_namespace": "medical",
+  "safety_profile": "standard",
+  "verify_mitigation": true,
+  "max_recovery_wait_seconds": 30
+}

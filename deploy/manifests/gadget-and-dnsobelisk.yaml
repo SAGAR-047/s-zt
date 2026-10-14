@@ -1,0 +1,41 @@
+# SentinelCloud-Advanced: Inspektor Gadget & DNSObelisk Security Manifests
+# =========================================================================
+
+apiVersion: gadget.kinvolk.io/v1alpha1
+kind: Trace
+metadata:
+  name: trace-exec-medical
+  namespace: medical
+spec:
+  gadget: trace_exec
+  runMode: Stream
+  outputMode: Stream
+  selector:
+    namespace: medical
+---
+apiVersion: gadget.kinvolk.io/v1alpha1
+kind: Trace
+metadata:
+  name: trace-tcp-medical
+  namespace: medical
+spec:
+  gadget: trace_tcp
+  runMode: Stream
+  outputMode: Stream
+  selector:
+    namespace: medical
+---
+apiVersion: dnsobelisk.sentinel.io/v1alpha1
+kind: DNSInspectionPolicy
+metadata:
+  name: block-dns-exfiltration
+  namespace: medical
+spec:
+  endpointSelector:
+    matchLabels:
+      tier: medical
+  rules:
+    - action: Deny
+      matchQueryTypes: ["TXT", "NULL"]
+      logAlert: true
+      description: "Block DNS TXT record tunneling & C2 exfiltration"

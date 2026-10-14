@@ -1,0 +1,62 @@
+{
+  "experiment_id": "EXP-20261013-225734-99A1",
+  "session_id": "TEST-2026-C59A",
+  "scenario": "ransomware",
+  "scenario_title": "Multi-Stage Ransomware Attack Chain",
+  "target_pod": "ehr",
+  "target_namespace": "medical",
+  "client_provenance": "PC2_authorized_external_test_client",
+  "start_time": "2026-10-13T22:57:34.996955+00:00",
+  "end_time": "2026-10-13T22:57:42.485118+00:00",
+  "duration_seconds": 7.49,
+  "events_submitted": 4,
+  "events_accepted": 4,
+  "highest_anomaly_score": 0.984,
+  "anomaly_threshold": 0.72,
+  "detection_expected": true,
+  "detection_verified": true,
+  "incident_id": "SC-2026-6EED1",
+  "incident_severity": "MEDIUM",
+  "mitigation_verified": true,
+  "service_recovery_verified": true,
+  "post_mitigation_health": "healthy",
+  "overall_status": "SUCCESS",
+  "submission_details": [
+    {
+      "accepted": true,
+      "status_code": 200,
+      "duration_ms": 26.77,
+      "event_id": "54748dbb6d64",
+      "anomaly_score": 0.895,
+      "is_anomaly": true,
+      "explanation": "Unauthorized shell execution in container: /bin/bash"
+    },
+    {
+      "accepted": true,
+      "status_code": 200,
+      "duration_ms": 26.71,
+      "event_id": "c5efa5cc35ad",
+      "anomaly_score": 0.984,
+      "is_anomaly": true,
+      "explanation": "Ransomware encryption activity detected: suspicious file rename with encryption extension"
+    },
+    {
+      "accepted": true,
+      "status_code": 200,
+      "duration_ms": 25.17,
+      "event_id": "93d1b5e5a6f0",
+      "anomaly_score": 0.942,
+      "is_anomaly": true,
+      "explanation": "SMB lateral movement attempt (port 445) on ehr"
+    },
+    {
+      "accepted": true,
+      "status_code": 200,
+      "duration_ms": 23.52,
+      "event_id": "d4d94ddfbefc",
+      "anomaly_score": 0.875,
+      "is_anomaly": true,
+      "explanation": "DNS exfiltration / tunneling detected: exfil-data-1dea6470.c2-tunnel.example.com"
+    }
+  ]
+}

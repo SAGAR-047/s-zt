@@ -1,0 +1,78 @@
+{{- $ns := .Values.medical.namespace }}
+{{- $registry := .Values.global.imageRegistry }}
+{{- $pullPolicy := .Values.global.imagePullPolicy }}
+
+{{- range $name, $svc := dict "vitals" .Values.medical.vitals "drug-dispenser" .Values.medical.drugDispenser "ehr" .Values.medical.ehr "billing" .Values.medical.billing }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  labels:
+    app: {{ $name }}
+    {{- if $svc.critical }}
+    critical: "true"
+    {{- end }}
+    tier: medical
+spec:
+  replicas: {{ $svc.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+        {{- if $svc.critical }}
+        critical: "true"
+        {{- end }}
+        tier: medical
+    spec:
+      containers:
+        - name: {{ $name }}
+          image: {{ $svc.image }}
+          imagePullPolicy: {{ $pullPolicy }}
+          ports:
+            - containerPort: {{ $svc.port }}
+              name: http
+          env:
+            - name: PORT
+              value: "{{ $svc.port }}"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ $svc.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ $svc.port }}
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ $ns }}
+  labels:
+    app: {{ $name }}
+spec:
+  type: ClusterIP
+  selector:
+    app: {{ $name }}
+  ports:
+    - port: {{ $svc.port }}
+      targetPort: {{ $svc.port }}
+      protocol: TCP
+      name: http
+{{- end }}

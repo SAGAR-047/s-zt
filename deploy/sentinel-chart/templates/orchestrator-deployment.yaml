@@ -1,0 +1,70 @@
+{{- $ns := .Values.orchestrator.namespace }}
+{{- $pullPolicy := .Values.global.imagePullPolicy }}
+{{- $ch := .Values.clickhouse }}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mape-k-controller
+  namespace: {{ $ns }}
+  labels:
+    app: mape-k-controller
+    plane: enforcement
+spec:
+  replicas: {{ .Values.orchestrator.replicas }}
+  selector:
+    matchLabels:
+      app: mape-k-controller
+  template:
+    metadata:
+      labels:
+        app: mape-k-controller
+        plane: enforcement
+    spec:
+      serviceAccountName: sentinel-controller
+      containers:
+        - name: controller
+          image: {{ .Values.orchestrator.image }}
+          imagePullPolicy: {{ $pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.orchestrator.port }}
+              name: http
+          env:
+            - name: DIAGNOSIS_SERVICE_URL
+              value: "http://diagnosis-service.{{ $ns }}.svc.cluster.local:{{ .Values.intelligence.diagnosisService.port }}"
+            - name: CLICKHOUSE_HOST
+              value: {{ $ch.host | quote }}
+            - name: CLICKHOUSE_PORT
+              value: {{ $ch.port | quote }}
+            - name: CLICKHOUSE_DB
+              value: {{ $ch.database | quote }}
+            - name: SAFETY_TIMEOUT_SECONDS
+              value: {{ .Values.orchestrator.safetyTimeoutSeconds | quote }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.orchestrator.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mape-k-controller
+  namespace: {{ $ns }}
+spec:
+  type: ClusterIP
+  selector:
+    app: mape-k-controller
+  ports:
+    - port: {{ .Values.orchestrator.port }}
+      targetPort: {{ .Values.orchestrator.port }}
+      name: http

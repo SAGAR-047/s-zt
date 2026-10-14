@@ -1,0 +1,68 @@
+[
+  {
+    "dataset": "ADFA-LD",
+    "record_id": 1,
+    "pod_name": "vitals",
+    "namespace": "medical",
+    "syscall": "sys_read",
+    "port": 5000,
+    "target": "/data/patient_vitals_1.json",
+    "binary": "/usr/bin/python",
+    "label": 0
+  },
+  {
+    "dataset": "ADFA-LD",
+    "record_id": 2,
+    "pod_name": "vitals",
+    "namespace": "medical",
+    "syscall": "sys_write",
+    "port": 5000,
+    "target": "/data/patient_vitals_1.json",
+    "binary": "/usr/bin/python",
+    "label": 0
+  },
+  {
+    "dataset": "BETH-Threat-Hook",
+    "record_id": 3,
+    "pod_name": "ehr",
+    "namespace": "medical",
+    "syscall": "sys_execve",
+    "port": 0,
+    "target": "echo intrusion",
+    "binary": "/bin/sh",
+    "label": 1
+  },
+  {
+    "dataset": "BETH-Threat-Hook",
+    "record_id": 4,
+    "pod_name": "ehr",
+    "namespace": "medical",
+    "syscall": "sys_connect",
+    "port": 445,
+    "target": "billing:445",
+    "binary": "/usr/bin/python",
+    "label": 1
+  },
+  {
+    "dataset": "BETH-Threat-Hook",
+    "record_id": 5,
+    "pod_name": "ehr",
+    "namespace": "medical",
+    "syscall": "sys_rename",
+    "port": 0,
+    "target": "patient_records.locked",
+    "binary": "/bin/mv",
+    "label": 1
+  },
+  {
+    "dataset": "BETH-Threat-Hook",
+    "record_id": 6,
+    "pod_name": "ehr",
+    "namespace": "medical",
+    "syscall": "sys_connect",
+    "port": 53,
+    "target": "exfil.c2-command.org",
+    "binary": "/usr/bin/nslookup",
+    "label": 1
+  }
+]

@@ -1,0 +1,5 @@
+System / Framework,MTTD (s),MTTR (s),Node CPU Overhead (%),False Positive Rate (%),Target Met
+SentinelCloud-Advanced (eBPF + MAPE-K),1.25,15.40,2.4%,0.00%,YES (ALL PASS)
+Rule-Based Baseline (Falco + Gatekeeper),8.40,112.50,4.8%,3.20%,FAIL (MTTR > 45s)
+Static Signature-Only,14.20,180.00,6.2%,5.80%,FAIL (MTTD & MTTR)
+No Autonomous Defense,N/A (Manual),N/A (Manual),0.5%,N/A,FAIL

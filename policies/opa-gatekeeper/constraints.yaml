@@ -1,0 +1,156 @@
+# Gatekeeper ConstraintTemplate and Constraint Resources
+# Apply these to your cluster to activate the Rego policies
+
+---
+# ConstraintTemplate for SMB Egress Denial
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: denysmbegress
+spec:
+  crd:
+    spec:
+      names:
+        kind: DenySMBEgress
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            namespaces:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package denysmbegress
+
+        violation[{"msg": msg}] {
+          input.review.kind.kind == "CiliumNetworkPolicy"
+          ns := input.review.object.metadata.namespace
+          ns == input.parameters.namespaces[_]
+          egress := input.review.object.spec.egress[_]
+          port := egress.toPorts[_].ports[_]
+          port.port == "445"
+          not input.review.object.spec.endpointSelector.matchLabels.app == "billing"
+          msg := sprintf("Port 445 egress forbidden in namespace %v", [ns])
+        }
+
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: DenySMBEgress
+metadata:
+  name: deny-smb-in-medical
+spec:
+  match:
+    kinds:
+      - apiGroups: ["cilium.io"]
+        kinds: ["CiliumNetworkPolicy"]
+    namespaces: ["medical"]
+  parameters:
+    namespaces: ["medical"]
+
+---
+# ConstraintTemplate for Host Network Denial
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: denyhostnetwork
+spec:
+  crd:
+    spec:
+      names:
+        kind: DenyHostNetwork
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            namespaces:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package denyhostnetwork
+
+        violation[{"msg": msg}] {
+          input.review.kind.kind == "Pod"
+          ns := input.review.object.metadata.namespace
+          ns == input.parameters.namespaces[_]
+          input.review.object.spec.hostNetwork == true
+          msg := sprintf("hostNetwork forbidden in namespace %v, pod %v", [ns, input.review.object.metadata.name])
+        }
+
+        violation[{"msg": msg}] {
+          input.review.kind.kind == "Deployment"
+          ns := input.review.object.metadata.namespace
+          ns == input.parameters.namespaces[_]
+          input.review.object.spec.template.spec.hostNetwork == true
+          msg := sprintf("hostNetwork forbidden in namespace %v, deployment %v", [ns, input.review.object.metadata.name])
+        }
+
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: DenyHostNetwork
+metadata:
+  name: deny-hostnetwork-medical
+spec:
+  match:
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
+      - apiGroups: ["apps"]
+        kinds: ["Deployment"]
+    namespaces: ["medical"]
+  parameters:
+    namespaces: ["medical"]
+
+---
+# ConstraintTemplate for External Ingress Denial
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: denyexternalingress
+spec:
+  crd:
+    spec:
+      names:
+        kind: DenyExternalIngress
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            namespaces:
+              type: array
+              items:
+                type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package denyexternalingress
+
+        violation[{"msg": msg}] {
+          input.review.kind.kind == "CiliumNetworkPolicy"
+          ns := input.review.object.metadata.namespace
+          ns == input.parameters.namespaces[_]
+          ingress := input.review.object.spec.ingress[_]
+          cidr := ingress.fromCIDR[_]
+          cidr == "0.0.0.0/0"
+          not input.review.object.spec.endpointSelector.matchLabels["app.kubernetes.io/name"] == "ingress-nginx"
+          msg := sprintf("External ingress (0.0.0.0/0) forbidden in namespace %v", [ns])
+        }
+
+---
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: DenyExternalIngress
+metadata:
+  name: deny-external-ingress-medical
+spec:
+  match:
+    kinds:
+      - apiGroups: ["cilium.io"]
+        kinds: ["CiliumNetworkPolicy"]
+    namespaces: ["medical"]
+  parameters:
+    namespaces: ["medical"]

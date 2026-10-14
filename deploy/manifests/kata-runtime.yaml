@@ -1,0 +1,49 @@
+# SentinelCloud-Advanced: Kata Containers Hypervisor Isolation
+# =============================================================
+# Provides confidential computing hypervisor boundary for EHR workloads.
+
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: kata-qemu
+handler: kata-qemu
+overhead:
+  podFixed:
+    cpu: "250m"
+    memory: "160Mi"
+scheduling:
+  nodeSelector:
+    katacontainers.io/kata-runtime: "true"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ehr-kata
+  namespace: medical
+  labels:
+    app: ehr
+    tier: medical
+    confidential-computing: "kata-qemu"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ehr
+  template:
+    metadata:
+      labels:
+        app: ehr
+        tier: medical
+        confidential-computing: "kata-qemu"
+    spec:
+      runtimeClassName: kata-qemu
+      containers:
+        - name: ehr
+          image: sentinelcloud/ehr:latest
+          ports:
+            - containerPort: 5002
+          env:
+            - name: PORT
+              value: "5002"
+            - name: KATA_ISOLATION_ENABLED
+              value: "true"

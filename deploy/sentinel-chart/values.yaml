@@ -1,0 +1,109 @@
+# SentinelCloud-Advanced Helm Values
+# Override these values for your environment
+
+# -- Global settings
+global:
+  imageRegistry: "sentinelcloud"
+  imagePullPolicy: IfNotPresent
+
+# -- Cilium CNI
+cilium:
+  enabled: true
+  cluster:
+    name: sentinel
+  operator:
+    replicas: 1
+  ipam:
+    mode: kubernetes
+  policyEnforcementMode: always
+  hubble:
+    enabled: true
+    relay:
+      enabled: true
+    ui:
+      enabled: true
+
+# -- Tetragon (eBPF observability)
+tetragon:
+  enabled: true
+
+# -- Falco (runtime security)
+falco:
+  enabled: true
+  ebpf:
+    enabled: true
+  falcosidekick:
+    enabled: false
+
+# -- OPA Gatekeeper
+gatekeeper:
+  enabled: true
+  replicas: 1
+
+# -- Medical Microservices
+medical:
+  namespace: medical
+  vitals:
+    replicas: 2
+    image: sentinelcloud/vitals:latest
+    port: 5000
+    critical: true
+  drugDispenser:
+    replicas: 2
+    image: sentinelcloud/drug-dispenser:latest
+    port: 5001
+    critical: true
+  ehr:
+    replicas: 1
+    image: sentinelcloud/ehr:latest
+    port: 5002
+    critical: false
+  billing:
+    replicas: 1
+    image: sentinelcloud/billing:latest
+    port: 5003
+    critical: false
+
+# -- Intelligence Plane
+intelligence:
+  namespace: sentinel
+  anomalyDetector:
+    replicas: 1
+    image: sentinelcloud/streaming-anomaly-detector:latest
+    port: 8080
+    iforestThreshold: "0.75"
+    hmmThreshold: "-5.0"
+    iforestNTrees: "100"
+    iforestWindowSize: "500"
+  diagnosisService:
+    replicas: 1
+    image: sentinelcloud/diagnosis-service:latest
+    port: 8081
+    lookbackSeconds: "60"
+  tetragonForwarder:
+    image: sentinelcloud/tetragon-kafka-forwarder:latest
+    port: 8082
+
+# -- Orchestrator (MAPE-K Controller)
+orchestrator:
+  namespace: sentinel
+  replicas: 1
+  image: sentinelcloud/mape-k-controller:latest
+  port: 8083
+  safetyTimeoutSeconds: "3"
+
+# -- Kafka (Strimzi)
+kafka:
+  enabled: true
+  bootstrapServers: "kafka.sentinel.svc.cluster.local:9092"
+  topics:
+    syscalls: syscalls
+    falcoAlerts: falco_alerts
+    dnsBlocks: dns_blocks
+
+# -- ClickHouse
+clickhouse:
+  enabled: true
+  host: "clickhouse.sentinel.svc.cluster.local"
+  port: 9000
+  database: sentinel

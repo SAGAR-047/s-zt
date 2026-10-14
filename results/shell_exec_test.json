@@ -1,0 +1,35 @@
+{
+  "experiment_id": "EXP-20261013-225721-BE1B",
+  "session_id": "TEST-2026-C9BD",
+  "scenario": "shell_exec",
+  "scenario_title": "Unauthorized Container Shell Execution",
+  "target_pod": "ehr",
+  "target_namespace": "medical",
+  "client_provenance": "PC2_authorized_external_test_client",
+  "start_time": "2026-10-13T22:57:21.058274+00:00",
+  "end_time": "2026-10-13T22:57:27.556151+00:00",
+  "duration_seconds": 6.5,
+  "events_submitted": 1,
+  "events_accepted": 1,
+  "highest_anomaly_score": 0.895,
+  "anomaly_threshold": 0.72,
+  "detection_expected": true,
+  "detection_verified": true,
+  "incident_id": "SC-2026-6A0FD",
+  "incident_severity": "MEDIUM",
+  "mitigation_verified": true,
+  "service_recovery_verified": true,
+  "post_mitigation_health": "healthy",
+  "overall_status": "SUCCESS",
+  "submission_details": [
+    {
+      "accepted": true,
+      "status_code": 200,
+      "duration_ms": 28.55,
+      "event_id": "cac890f4703e",
+      "anomaly_score": 0.895,
+      "is_anomaly": true,
+      "explanation": "Unauthorized shell execution in container: /bin/bash"
+    }
+  ]
+}

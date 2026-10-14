@@ -1,0 +1,380 @@
+# Kubernetes Deployments & Services for SentinelCloud Intelligence and Orchestrator Plane
+# Namespace: sentinel
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sentinel
+  labels:
+    sentinel.io/system: "true"
+
+---
+# ==================== STREAMING ANOMALY DETECTOR ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streaming-anomaly-detector
+  namespace: sentinel
+  labels:
+    app: streaming-anomaly-detector
+    plane: intelligence
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: streaming-anomaly-detector
+  template:
+    metadata:
+      labels:
+        app: streaming-anomaly-detector
+        plane: intelligence
+    spec:
+      serviceAccountName: sentinel-intelligence
+      containers:
+        - name: detector
+          image: sentinelcloud/streaming-anomaly-detector:latest
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: KAFKA_BOOTSTRAP
+              value: "kafka.sentinel.svc.cluster.local:9092"
+            - name: CLICKHOUSE_HOST
+              value: "clickhouse.sentinel.svc.cluster.local"
+            - name: CLICKHOUSE_PORT
+              value: "9000"
+            - name: CLICKHOUSE_DB
+              value: "sentinel"
+            - name: IFOREST_THRESHOLD
+              value: "0.75"
+            - name: HMM_THRESHOLD
+              value: "-5.0"
+            - name: MODEL_SAVE_PATH
+              value: "/data/models"
+          volumeMounts:
+            - name: model-storage
+              mountPath: /data/models
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+      volumes:
+        - name: model-storage
+          persistentVolumeClaim:
+            claimName: model-storage-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-storage-pvc
+  namespace: sentinel
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: streaming-anomaly-detector
+  namespace: sentinel
+spec:
+  type: ClusterIP
+  selector:
+    app: streaming-anomaly-detector
+  ports:
+    - port: 8080
+      targetPort: 8080
+      name: http
+
+---
+# ==================== DIAGNOSIS SERVICE ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diagnosis-service
+  namespace: sentinel
+  labels:
+    app: diagnosis-service
+    plane: intelligence
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: diagnosis-service
+  template:
+    metadata:
+      labels:
+        app: diagnosis-service
+        plane: intelligence
+    spec:
+      containers:
+        - name: diagnosis
+          image: sentinelcloud/diagnosis-service:latest
+          ports:
+            - containerPort: 8081
+              name: http
+          env:
+            - name: CLICKHOUSE_HOST
+              value: "clickhouse.sentinel.svc.cluster.local"
+            - name: CLICKHOUSE_PORT
+              value: "9000"
+            - name: CLICKHOUSE_DB
+              value: "sentinel"
+            - name: LOOKBACK_SECONDS
+              value: "60"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: diagnosis-service
+  namespace: sentinel
+spec:
+  type: ClusterIP
+  selector:
+    app: diagnosis-service
+  ports:
+    - port: 8081
+      targetPort: 8081
+      name: http
+
+---
+# ==================== TETRAGON KAFKA FORWARDER ====================
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: tetragon-kafka-forwarder
+  namespace: sentinel
+  labels:
+    app: tetragon-kafka-forwarder
+    plane: observability
+spec:
+  selector:
+    matchLabels:
+      app: tetragon-kafka-forwarder
+  template:
+    metadata:
+      labels:
+        app: tetragon-kafka-forwarder
+        plane: observability
+    spec:
+      containers:
+        - name: forwarder
+          image: sentinelcloud/tetragon-kafka-forwarder:latest
+          ports:
+            - containerPort: 8082
+              name: http
+          env:
+            - name: KAFKA_BOOTSTRAP
+              value: "kafka.sentinel.svc.cluster.local:9092"
+            - name: FORWARDER_MODE
+              value: "file"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: tetragon-export
+              mountPath: /var/run/cilium/tetragon
+              readOnly: true
+            - name: falco-logs
+              mountPath: /var/log/falco
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: tetragon-export
+          hostPath:
+            path: /var/run/cilium/tetragon
+            type: DirectoryOrCreate
+        - name: falco-logs
+          hostPath:
+            path: /var/log/falco
+            type: DirectoryOrCreate
+
+---
+# ==================== MAPE-K CONTROLLER ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mape-k-controller
+  namespace: sentinel
+  labels:
+    app: mape-k-controller
+    plane: enforcement
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mape-k-controller
+  template:
+    metadata:
+      labels:
+        app: mape-k-controller
+        plane: enforcement
+    spec:
+      serviceAccountName: sentinel-controller
+      containers:
+        - name: controller
+          image: sentinelcloud/mape-k-controller:latest
+          ports:
+            - containerPort: 8083
+              name: http
+          env:
+            - name: DIAGNOSIS_SERVICE_URL
+              value: "http://diagnosis-service.sentinel.svc.cluster.local:8081"
+            - name: CLICKHOUSE_HOST
+              value: "clickhouse.sentinel.svc.cluster.local"
+            - name: CLICKHOUSE_PORT
+              value: "9000"
+            - name: CLICKHOUSE_DB
+              value: "sentinel"
+            - name: SAFETY_TIMEOUT_SECONDS
+              value: "3"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8083
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mape-k-controller
+  namespace: sentinel
+spec:
+  type: ClusterIP
+  selector:
+    app: mape-k-controller
+  ports:
+    - port: 8083
+      targetPort: 8083
+      name: http
+
+---
+# ==================== RBAC ====================
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sentinel-controller
+  namespace: sentinel
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sentinel-controller-role
+rules:
+  # Watch and manage SecurityAlert CRDs
+  - apiGroups: ["sentinel.io"]
+    resources: ["securityalerts", "securityalerts/status"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Manage pods (for quarantine/redeploy)
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "delete", "patch"]
+  # Manage deployments (for restart/scale)
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/scale", "replicasets"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  # Manage Cilium policies
+  - apiGroups: ["cilium.io"]
+    resources: ["ciliumnetworkpolicies"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  # Events
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+  # Services (for failover)
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sentinel-controller-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sentinel-controller-role
+subjects:
+  - kind: ServiceAccount
+    name: sentinel-controller
+    namespace: sentinel
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sentinel-intelligence
+  namespace: sentinel
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sentinel-intelligence-role
+rules:
+  - apiGroups: ["sentinel.io"]
+    resources: ["securityalerts"]
+    verbs: ["get", "list", "create", "update", "patch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sentinel-intelligence-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sentinel-intelligence-role
+subjects:
+  - kind: ServiceAccount
+    name: sentinel-intelligence
+    namespace: sentinel

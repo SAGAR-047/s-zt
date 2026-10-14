@@ -1,0 +1,16 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.medical.namespace }}
+  labels:
+    sentinel.io/monitored: "true"
+    {{- include "sentinel.labels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.intelligence.namespace }}
+  labels:
+    sentinel.io/system: "true"
+    {{- include "sentinel.labels" . | nindent 4 }}

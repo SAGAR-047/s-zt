@@ -1,0 +1,123 @@
+# Cilium Network Policies – Baseline
+# Applied during initial deployment to define allowed traffic patterns
+
+---
+# Allow vitals -> ehr on port 8080 only
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-vitals-to-ehr
+  namespace: medical
+spec:
+  description: "Allow vitals service to communicate with EHR on port 8080"
+  endpointSelector:
+    matchLabels:
+      app: ehr
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: vitals
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+
+---
+# Allow drug-dispenser <-> vitals on port 5000
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-drug-dispenser-vitals
+  namespace: medical
+spec:
+  description: "Allow drug-dispenser and vitals to communicate on port 5000"
+  endpointSelector:
+    matchLabels:
+      app: vitals
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: drug-dispenser
+      toPorts:
+        - ports:
+            - port: "5000"
+              protocol: TCP
+
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-vitals-to-drug-dispenser
+  namespace: medical
+spec:
+  description: "Allow vitals to communicate with drug-dispenser on port 5001"
+  endpointSelector:
+    matchLabels:
+      app: drug-dispenser
+  ingress:
+    - fromEndpoints:
+        - matchLabels:
+            app: vitals
+      toPorts:
+        - ports:
+            - port: "5001"
+              protocol: TCP
+
+---
+# Deny egress to port 445 except from billing namespace
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: deny-smb-egress
+  namespace: medical
+spec:
+  description: "Deny SMB (port 445) egress from medical namespace"
+  endpointSelector:
+    matchExpressions:
+      - key: app
+        operator: NotIn
+        values: ["billing"]
+  egressDeny:
+    - toPorts:
+        - ports:
+            - port: "445"
+              protocol: TCP
+
+---
+# Default deny all egress for quarantined pods
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: quarantine-template
+  namespace: medical
+spec:
+  description: "Template: Deny all traffic for quarantined (suspect) pods"
+  endpointSelector:
+    matchLabels:
+      suspect: "true"
+  ingressDeny:
+    - {}
+  egressDeny:
+    - {}
+
+---
+# Allow DNS resolution for all medical pods
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: medical
+spec:
+  description: "Allow DNS resolution for all pods in medical namespace"
+  endpointSelector: {}
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP

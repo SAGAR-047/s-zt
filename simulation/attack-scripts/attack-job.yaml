@@ -1,0 +1,43 @@
+# Run the attack simulator as a Kubernetes Job inside the medical namespace
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ransomware-simulation
+  namespace: medical
+  labels:
+    app: ransomware-simulation
+    purpose: security-testing
+spec:
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: ransomware-simulation
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: attacker
+          image: sentinelcloud/attack-simulator:latest
+          command:
+            - python
+            - ransomware_simulator.py
+            - --billing-host
+            - billing.medical.svc.cluster.local
+            - --billing-port
+            - "445"
+            - --c2-domain
+            - evil-c2-server.example.com
+            - --file-count
+            - "100"
+            - --delay-ms
+            - "10"
+            - --target-dir
+            - /tmp/attack-data
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

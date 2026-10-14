@@ -1,0 +1,60 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "5050:5050"
+    environment:
+      - SENTINEL_HOST=0.0.0.0
+      - SENTINEL_PORT=5050
+      - SENTINEL_MODE=dev
+      - SENTINEL_VITALS_URL=http://vitals:5000
+      - SENTINEL_DRUG_DISPENSER_URL=http://drug-dispenser:5001
+      - SENTINEL_EHR_URL=http://ehr:5002
+      - SENTINEL_BILLING_URL=http://billing:5003
+      - SENTINEL_SQLITE_PATH=/app/data/sentinel.db
+    volumes:
+      - sentinel-data:/app/data
+    restart: always
+    depends_on:
+      - vitals
+      - drug-dispenser
+      - ehr
+      - billing
+
+  vitals:
+    build:
+      context: services/medical/vitals
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    restart: always
+
+  drug-dispenser:
+    build:
+      context: services/medical/drug-dispenser
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    restart: always
+
+  ehr:
+    build:
+      context: services/medical/ehr
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5002"
+    restart: always
+
+  billing:
+    build:
+      context: services/medical/billing
+      dockerfile: Dockerfile
+    ports:
+      - "5003:5003"
+    restart: always
+
+volumes:
+  sentinel-data:
+    driver: local

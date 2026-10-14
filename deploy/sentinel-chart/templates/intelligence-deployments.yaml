@@ -1,0 +1,205 @@
+{{- $ns := .Values.intelligence.namespace }}
+{{- $pullPolicy := .Values.global.imagePullPolicy }}
+{{- $kafka := .Values.kafka }}
+{{- $ch := .Values.clickhouse }}
+
+---
+# ==================== STREAMING ANOMALY DETECTOR ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streaming-anomaly-detector
+  namespace: {{ $ns }}
+  labels:
+    app: streaming-anomaly-detector
+    plane: intelligence
+spec:
+  replicas: {{ .Values.intelligence.anomalyDetector.replicas }}
+  selector:
+    matchLabels:
+      app: streaming-anomaly-detector
+  template:
+    metadata:
+      labels:
+        app: streaming-anomaly-detector
+        plane: intelligence
+    spec:
+      serviceAccountName: sentinel-intelligence
+      containers:
+        - name: detector
+          image: {{ .Values.intelligence.anomalyDetector.image }}
+          imagePullPolicy: {{ $pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.intelligence.anomalyDetector.port }}
+              name: http
+          env:
+            - name: KAFKA_BOOTSTRAP
+              value: {{ $kafka.bootstrapServers | quote }}
+            - name: CLICKHOUSE_HOST
+              value: {{ $ch.host | quote }}
+            - name: CLICKHOUSE_PORT
+              value: {{ $ch.port | quote }}
+            - name: CLICKHOUSE_DB
+              value: {{ $ch.database | quote }}
+            - name: IFOREST_THRESHOLD
+              value: {{ .Values.intelligence.anomalyDetector.iforestThreshold | quote }}
+            - name: HMM_THRESHOLD
+              value: {{ .Values.intelligence.anomalyDetector.hmmThreshold | quote }}
+          volumeMounts:
+            - name: model-storage
+              mountPath: /data/models
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+      volumes:
+        - name: model-storage
+          persistentVolumeClaim:
+            claimName: model-storage-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-storage-pvc
+  namespace: {{ $ns }}
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: streaming-anomaly-detector
+  namespace: {{ $ns }}
+spec:
+  type: ClusterIP
+  selector:
+    app: streaming-anomaly-detector
+  ports:
+    - port: {{ .Values.intelligence.anomalyDetector.port }}
+      targetPort: {{ .Values.intelligence.anomalyDetector.port }}
+      name: http
+
+---
+# ==================== DIAGNOSIS SERVICE ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: diagnosis-service
+  namespace: {{ $ns }}
+  labels:
+    app: diagnosis-service
+    plane: intelligence
+spec:
+  replicas: {{ .Values.intelligence.diagnosisService.replicas }}
+  selector:
+    matchLabels:
+      app: diagnosis-service
+  template:
+    metadata:
+      labels:
+        app: diagnosis-service
+        plane: intelligence
+    spec:
+      containers:
+        - name: diagnosis
+          image: {{ .Values.intelligence.diagnosisService.image }}
+          imagePullPolicy: {{ $pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.intelligence.diagnosisService.port }}
+              name: http
+          env:
+            - name: CLICKHOUSE_HOST
+              value: {{ $ch.host | quote }}
+            - name: CLICKHOUSE_PORT
+              value: {{ $ch.port | quote }}
+            - name: CLICKHOUSE_DB
+              value: {{ $ch.database | quote }}
+            - name: LOOKBACK_SECONDS
+              value: {{ .Values.intelligence.diagnosisService.lookbackSeconds | quote }}
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: diagnosis-service
+  namespace: {{ $ns }}
+spec:
+  type: ClusterIP
+  selector:
+    app: diagnosis-service
+  ports:
+    - port: {{ .Values.intelligence.diagnosisService.port }}
+      targetPort: {{ .Values.intelligence.diagnosisService.port }}
+      name: http
+
+---
+# ==================== TETRAGON KAFKA FORWARDER (DaemonSet) ====================
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: tetragon-kafka-forwarder
+  namespace: {{ $ns }}
+  labels:
+    app: tetragon-kafka-forwarder
+    plane: observability
+spec:
+  selector:
+    matchLabels:
+      app: tetragon-kafka-forwarder
+  template:
+    metadata:
+      labels:
+        app: tetragon-kafka-forwarder
+        plane: observability
+    spec:
+      containers:
+        - name: forwarder
+          image: {{ .Values.intelligence.tetragonForwarder.image }}
+          imagePullPolicy: {{ $pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.intelligence.tetragonForwarder.port }}
+              name: http
+          env:
+            - name: KAFKA_BOOTSTRAP
+              value: {{ $kafka.bootstrapServers | quote }}
+            - name: FORWARDER_MODE
+              value: "file"
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: tetragon-export
+              mountPath: /var/run/cilium/tetragon
+              readOnly: true
+            - name: falco-logs
+              mountPath: /var/log/falco
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: tetragon-export
+          hostPath:
+            path: /var/run/cilium/tetragon
+            type: DirectoryOrCreate
+        - name: falco-logs
+          hostPath:
+            path: /var/log/falco
+            type: DirectoryOrCreate

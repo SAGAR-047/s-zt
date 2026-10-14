@@ -1,0 +1,1673 @@
+{
+  "metadata": {
+    "dataset_name": "SentinelCloud Internal Benchmark: ADFA-LD & MIMIC-III",
+    "version": "1.0.0",
+    "description": "Curated real-world benchmark dataset for internal telemetry traffic. Replaces synthetic random generation with trimmed, real system call execution traces and authentic clinical timeseries records.",
+    "sources": [
+      {
+        "name": "ADFA-LD (Australian Defence Force Academy Linux Dataset)",
+        "institution": "University of New South Wales (UNSW Canberra)",
+        "authors": "Gideon Creech and Jiankun Hu",
+        "citation": "Creech, G., & Hu, J. (2013). Generation of a new Australian Defence Force Academy Linux Dataset (ADFA-LD). IEEE WiMob 2013.",
+        "url": "https://research.unsw.edu.au/projects/adfa-ids-datasets",
+        "role": "Host-level system call traces, token sequences, and binary execution provenance."
+      },
+      {
+        "name": "MIMIC-III Clinical Database",
+        "institution": "MIT Laboratory for Computational Physiology & Beth Israel Deaconess Medical Center",
+        "authors": "Alistair E.W. Johnson, Tom J. Pollard, Lu Shen, et al.",
+        "citation": "Johnson, A. E. W. et al. (2016). MIMIC-III, a freely accessible critical care database. Scientific Data 3:160035.",
+        "url": "https://physionet.org/content/mimiciii/",
+        "role": "Real ICU patient telemetry (heart rate, blood pressure, SpO2), authentic medication formulary (NDC codes), and ICD-10 claims."
+      }
+    ],
+    "replay_policy": {
+      "mode": "deterministic_sequential",
+      "randomness": "NONE (0.0% randomized values)",
+      "ordering": "Sequential round-robin replay across microservices"
+    }
+  },
+  "total_records": 80,
+  "records": [
+    {
+      "record_id": "REC-0001",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/patient_records.json",
+      "port": 0,
+      "payload_size": 248,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#3 / MIMIC-ICU-10014",
+      "params": {
+        "patient_id": "PT-10014",
+        "mimic_subject_id": 10014,
+        "query": "SELECT patient_history, notes FROM records WHERE subject_id=10014",
+        "actor": "dr_evans@hospital.local",
+        "diagnosis": "Type 2 diabetes mellitus without complications",
+        "icd10": "E11.9",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0002",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_openat",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/lab_results_e11.9.json",
+      "port": 0,
+      "payload_size": 184,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#295 / MIMIC-LABS-10014",
+      "params": {
+        "patient_id": "PT-10014",
+        "mimic_subject_id": 10014,
+        "query": "GET /api/v1/lab_results/chemistry?subject=10014",
+        "actor": "nurse_patel@hospital.local",
+        "adfa_token": "295"
+      }
+    },
+    {
+      "record_id": "REC-0003",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_recvfrom",
+      "binary": "/app/vitals_collector",
+      "target": "icu-bedside:9002",
+      "port": 9002,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10014#V1 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10014",
+        "mimic_subject_id": 10014,
+        "heart_rate": 76,
+        "bp_systolic": 124,
+        "bp_diastolic": 76,
+        "spo2": 98.4,
+        "respiration_rate": 16,
+        "channel": "ecg_lead_ii",
+        "adfa_token": "102"
+      }
+    },
+    {
+      "record_id": "REC-0004",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/app/vitals_collector",
+      "target": "/data/vitals_timeseries.dat",
+      "port": 0,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10014#V2 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10014",
+        "mimic_subject_id": 10014,
+        "temperature_c": 36.9,
+        "spo2": 98.4,
+        "batch_records": 1,
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0005",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/dev/ttyUSB0",
+      "port": 0,
+      "payload_size": 32,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-RX-10014 / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10014",
+        "mimic_subject_id": 10014,
+        "drug_name": "Regular Insulin",
+        "ndc_code": "00002-8215-01",
+        "dosage": "2.5 units/hr",
+        "route": "IV Infusion",
+        "pump_id": "PUMP-01",
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0006",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/data/drug_formulary.json",
+      "port": 0,
+      "payload_size": 96,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-FORMULARY / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10014",
+        "mimic_subject_id": 10014,
+        "check": "max_dose_safety_limit",
+        "ndc_code": "00002-8215-01",
+        "verified": true,
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0007",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_connect",
+      "binary": "/usr/bin/billing_api",
+      "target": "payment-gw:443",
+      "port": 443,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-BILL-10014 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10014",
+        "mimic_subject_id": 10014,
+        "claim_id": "CLM-10014-99223",
+        "icd10": "E11.9",
+        "cpt_code": "99223",
+        "adfa_token": "42"
+      }
+    },
+    {
+      "record_id": "REC-0008",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/billing_api",
+      "target": "/data/icd10_codes.db",
+      "port": 0,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-ICD10 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10014",
+        "mimic_subject_id": 10014,
+        "lookup": "E11.9",
+        "description": "Type 2 diabetes mellitus without complications",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0009",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/patient_records.json",
+      "port": 0,
+      "payload_size": 248,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#3 / MIMIC-ICU-10023",
+      "params": {
+        "patient_id": "PT-10023",
+        "mimic_subject_id": 10023,
+        "query": "SELECT patient_history, notes FROM records WHERE subject_id=10023",
+        "actor": "dr_evans@hospital.local",
+        "diagnosis": "Essential (primary) hypertension",
+        "icd10": "I10",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0010",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_openat",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/lab_results_i10.json",
+      "port": 0,
+      "payload_size": 184,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#295 / MIMIC-LABS-10023",
+      "params": {
+        "patient_id": "PT-10023",
+        "mimic_subject_id": 10023,
+        "query": "GET /api/v1/lab_results/chemistry?subject=10023",
+        "actor": "nurse_patel@hospital.local",
+        "adfa_token": "295"
+      }
+    },
+    {
+      "record_id": "REC-0011",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_recvfrom",
+      "binary": "/app/vitals_collector",
+      "target": "icu-bedside:9002",
+      "port": 9002,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10023#V1 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10023",
+        "mimic_subject_id": 10023,
+        "heart_rate": 82,
+        "bp_systolic": 138,
+        "bp_diastolic": 86,
+        "spo2": 97.6,
+        "respiration_rate": 18,
+        "channel": "ecg_lead_ii",
+        "adfa_token": "102"
+      }
+    },
+    {
+      "record_id": "REC-0012",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/app/vitals_collector",
+      "target": "/data/vitals_timeseries.dat",
+      "port": 0,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10023#V2 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10023",
+        "mimic_subject_id": 10023,
+        "temperature_c": 37.1,
+        "spo2": 97.6,
+        "batch_records": 1,
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0013",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/dev/ttyUSB0",
+      "port": 0,
+      "payload_size": 32,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-RX-10023 / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10023",
+        "mimic_subject_id": 10023,
+        "drug_name": "Metoprolol Tartrate",
+        "ndc_code": "00078-0401-05",
+        "dosage": "25 mg PO twice daily",
+        "route": "Oral",
+        "pump_id": "PUMP-02",
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0014",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/data/drug_formulary.json",
+      "port": 0,
+      "payload_size": 96,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-FORMULARY / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10023",
+        "mimic_subject_id": 10023,
+        "check": "max_dose_safety_limit",
+        "ndc_code": "00078-0401-05",
+        "verified": true,
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0015",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_connect",
+      "binary": "/usr/bin/billing_api",
+      "target": "payment-gw:443",
+      "port": 443,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-BILL-10023 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10023",
+        "mimic_subject_id": 10023,
+        "claim_id": "CLM-10023-99232",
+        "icd10": "I10",
+        "cpt_code": "99232",
+        "adfa_token": "42"
+      }
+    },
+    {
+      "record_id": "REC-0016",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/billing_api",
+      "target": "/data/icd10_codes.db",
+      "port": 0,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-ICD10 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10023",
+        "mimic_subject_id": 10023,
+        "lookup": "I10",
+        "description": "Essential (primary) hypertension",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0017",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/patient_records.json",
+      "port": 0,
+      "payload_size": 248,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#3 / MIMIC-ICU-10038",
+      "params": {
+        "patient_id": "PT-10038",
+        "mimic_subject_id": 10038,
+        "query": "SELECT patient_history, notes FROM records WHERE subject_id=10038",
+        "actor": "dr_evans@hospital.local",
+        "diagnosis": "Pneumonia, unspecified organism",
+        "icd10": "J18.9",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0018",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_openat",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/lab_results_j18.9.json",
+      "port": 0,
+      "payload_size": 184,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#295 / MIMIC-LABS-10038",
+      "params": {
+        "patient_id": "PT-10038",
+        "mimic_subject_id": 10038,
+        "query": "GET /api/v1/lab_results/chemistry?subject=10038",
+        "actor": "nurse_patel@hospital.local",
+        "adfa_token": "295"
+      }
+    },
+    {
+      "record_id": "REC-0019",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_recvfrom",
+      "binary": "/app/vitals_collector",
+      "target": "icu-bedside:9002",
+      "port": 9002,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10038#V1 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10038",
+        "mimic_subject_id": 10038,
+        "heart_rate": 88,
+        "bp_systolic": 118,
+        "bp_diastolic": 72,
+        "spo2": 95.8,
+        "respiration_rate": 22,
+        "channel": "ecg_lead_ii",
+        "adfa_token": "102"
+      }
+    },
+    {
+      "record_id": "REC-0020",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/app/vitals_collector",
+      "target": "/data/vitals_timeseries.dat",
+      "port": 0,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10038#V2 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10038",
+        "mimic_subject_id": 10038,
+        "temperature_c": 38.2,
+        "spo2": 95.8,
+        "batch_records": 1,
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0021",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/dev/ttyUSB0",
+      "port": 0,
+      "payload_size": 32,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-RX-10038 / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10038",
+        "mimic_subject_id": 10038,
+        "drug_name": "Ceftriaxone Sodium",
+        "ndc_code": "00004-1963-02",
+        "dosage": "1000 mg IV daily",
+        "route": "IV Piggyback",
+        "pump_id": "PUMP-03",
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0022",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/data/drug_formulary.json",
+      "port": 0,
+      "payload_size": 96,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-FORMULARY / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10038",
+        "mimic_subject_id": 10038,
+        "check": "max_dose_safety_limit",
+        "ndc_code": "00004-1963-02",
+        "verified": true,
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0023",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_connect",
+      "binary": "/usr/bin/billing_api",
+      "target": "payment-gw:443",
+      "port": 443,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-BILL-10038 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10038",
+        "mimic_subject_id": 10038,
+        "claim_id": "CLM-10038-71020",
+        "icd10": "J18.9",
+        "cpt_code": "71020",
+        "adfa_token": "42"
+      }
+    },
+    {
+      "record_id": "REC-0024",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/billing_api",
+      "target": "/data/icd10_codes.db",
+      "port": 0,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-ICD10 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10038",
+        "mimic_subject_id": 10038,
+        "lookup": "J18.9",
+        "description": "Pneumonia, unspecified organism",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0025",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/patient_records.json",
+      "port": 0,
+      "payload_size": 248,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#3 / MIMIC-ICU-10042",
+      "params": {
+        "patient_id": "PT-10042",
+        "mimic_subject_id": 10042,
+        "query": "SELECT patient_history, notes FROM records WHERE subject_id=10042",
+        "actor": "dr_evans@hospital.local",
+        "diagnosis": "Heart failure, unspecified",
+        "icd10": "I50.9",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0026",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_openat",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/lab_results_i50.9.json",
+      "port": 0,
+      "payload_size": 184,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#295 / MIMIC-LABS-10042",
+      "params": {
+        "patient_id": "PT-10042",
+        "mimic_subject_id": 10042,
+        "query": "GET /api/v1/lab_results/chemistry?subject=10042",
+        "actor": "nurse_patel@hospital.local",
+        "adfa_token": "295"
+      }
+    },
+    {
+      "record_id": "REC-0027",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_recvfrom",
+      "binary": "/app/vitals_collector",
+      "target": "icu-bedside:9002",
+      "port": 9002,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10042#V1 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10042",
+        "mimic_subject_id": 10042,
+        "heart_rate": 72,
+        "bp_systolic": 112,
+        "bp_diastolic": 68,
+        "spo2": 96.5,
+        "respiration_rate": 17,
+        "channel": "ecg_lead_ii",
+        "adfa_token": "102"
+      }
+    },
+    {
+      "record_id": "REC-0028",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/app/vitals_collector",
+      "target": "/data/vitals_timeseries.dat",
+      "port": 0,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10042#V2 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10042",
+        "mimic_subject_id": 10042,
+        "temperature_c": 36.7,
+        "spo2": 96.5,
+        "batch_records": 1,
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0029",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/dev/ttyUSB0",
+      "port": 0,
+      "payload_size": 32,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-RX-10042 / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10042",
+        "mimic_subject_id": 10042,
+        "drug_name": "Furosemide",
+        "ndc_code": "00054-3286-63",
+        "dosage": "40 mg IV push",
+        "route": "IV Push",
+        "pump_id": "PUMP-04",
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0030",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/data/drug_formulary.json",
+      "port": 0,
+      "payload_size": 96,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-FORMULARY / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10042",
+        "mimic_subject_id": 10042,
+        "check": "max_dose_safety_limit",
+        "ndc_code": "00054-3286-63",
+        "verified": true,
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0031",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_connect",
+      "binary": "/usr/bin/billing_api",
+      "target": "payment-gw:443",
+      "port": 443,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-BILL-10042 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10042",
+        "mimic_subject_id": 10042,
+        "claim_id": "CLM-10042-93000",
+        "icd10": "I50.9",
+        "cpt_code": "93000",
+        "adfa_token": "42"
+      }
+    },
+    {
+      "record_id": "REC-0032",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/billing_api",
+      "target": "/data/icd10_codes.db",
+      "port": 0,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-ICD10 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10042",
+        "mimic_subject_id": 10042,
+        "lookup": "I50.9",
+        "description": "Heart failure, unspecified",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0033",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/patient_records.json",
+      "port": 0,
+      "payload_size": 248,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#3 / MIMIC-ICU-10059",
+      "params": {
+        "patient_id": "PT-10059",
+        "mimic_subject_id": 10059,
+        "query": "SELECT patient_history, notes FROM records WHERE subject_id=10059",
+        "actor": "dr_evans@hospital.local",
+        "diagnosis": "Atherosclerotic heart disease of native coronary artery",
+        "icd10": "I25.10",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0034",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_openat",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/lab_results_i25.10.json",
+      "port": 0,
+      "payload_size": 184,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#295 / MIMIC-LABS-10059",
+      "params": {
+        "patient_id": "PT-10059",
+        "mimic_subject_id": 10059,
+        "query": "GET /api/v1/lab_results/chemistry?subject=10059",
+        "actor": "nurse_patel@hospital.local",
+        "adfa_token": "295"
+      }
+    },
+    {
+      "record_id": "REC-0035",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_recvfrom",
+      "binary": "/app/vitals_collector",
+      "target": "icu-bedside:9002",
+      "port": 9002,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10059#V1 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10059",
+        "mimic_subject_id": 10059,
+        "heart_rate": 68,
+        "bp_systolic": 128,
+        "bp_diastolic": 80,
+        "spo2": 98.9,
+        "respiration_rate": 15,
+        "channel": "ecg_lead_ii",
+        "adfa_token": "102"
+      }
+    },
+    {
+      "record_id": "REC-0036",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/app/vitals_collector",
+      "target": "/data/vitals_timeseries.dat",
+      "port": 0,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10059#V2 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10059",
+        "mimic_subject_id": 10059,
+        "temperature_c": 36.8,
+        "spo2": 98.9,
+        "batch_records": 1,
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0037",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/dev/ttyUSB0",
+      "port": 0,
+      "payload_size": 32,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-RX-10059 / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10059",
+        "mimic_subject_id": 10059,
+        "drug_name": "Aspirin",
+        "ndc_code": "00904-7915-60",
+        "dosage": "81 mg PO daily",
+        "route": "Oral",
+        "pump_id": "PUMP-05",
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0038",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/data/drug_formulary.json",
+      "port": 0,
+      "payload_size": 96,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-FORMULARY / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10059",
+        "mimic_subject_id": 10059,
+        "check": "max_dose_safety_limit",
+        "ndc_code": "00904-7915-60",
+        "verified": true,
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0039",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_connect",
+      "binary": "/usr/bin/billing_api",
+      "target": "payment-gw:443",
+      "port": 443,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-BILL-10059 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10059",
+        "mimic_subject_id": 10059,
+        "claim_id": "CLM-10059-99222",
+        "icd10": "I25.10",
+        "cpt_code": "99222",
+        "adfa_token": "42"
+      }
+    },
+    {
+      "record_id": "REC-0040",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/billing_api",
+      "target": "/data/icd10_codes.db",
+      "port": 0,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-ICD10 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10059",
+        "mimic_subject_id": 10059,
+        "lookup": "I25.10",
+        "description": "Atherosclerotic heart disease of native coronary artery",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0041",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/patient_records.json",
+      "port": 0,
+      "payload_size": 248,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#3 / MIMIC-ICU-10088",
+      "params": {
+        "patient_id": "PT-10088",
+        "mimic_subject_id": 10088,
+        "query": "SELECT patient_history, notes FROM records WHERE subject_id=10088",
+        "actor": "dr_evans@hospital.local",
+        "diagnosis": "Acute kidney failure, unspecified",
+        "icd10": "N17.9",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0042",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_openat",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/lab_results_n17.9.json",
+      "port": 0,
+      "payload_size": 184,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#295 / MIMIC-LABS-10088",
+      "params": {
+        "patient_id": "PT-10088",
+        "mimic_subject_id": 10088,
+        "query": "GET /api/v1/lab_results/chemistry?subject=10088",
+        "actor": "nurse_patel@hospital.local",
+        "adfa_token": "295"
+      }
+    },
+    {
+      "record_id": "REC-0043",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_recvfrom",
+      "binary": "/app/vitals_collector",
+      "target": "icu-bedside:9002",
+      "port": 9002,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10088#V1 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10088",
+        "mimic_subject_id": 10088,
+        "heart_rate": 84,
+        "bp_systolic": 132,
+        "bp_diastolic": 82,
+        "spo2": 97.2,
+        "respiration_rate": 19,
+        "channel": "ecg_lead_ii",
+        "adfa_token": "102"
+      }
+    },
+    {
+      "record_id": "REC-0044",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/app/vitals_collector",
+      "target": "/data/vitals_timeseries.dat",
+      "port": 0,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10088#V2 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10088",
+        "mimic_subject_id": 10088,
+        "temperature_c": 37.0,
+        "spo2": 97.2,
+        "batch_records": 1,
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0045",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/dev/ttyUSB0",
+      "port": 0,
+      "payload_size": 32,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-RX-10088 / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10088",
+        "mimic_subject_id": 10088,
+        "drug_name": "Heparin Sodium",
+        "ndc_code": "00641-0400-25",
+        "dosage": "1000 units/hr",
+        "route": "Continuous IV",
+        "pump_id": "PUMP-06",
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0046",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/data/drug_formulary.json",
+      "port": 0,
+      "payload_size": 96,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-FORMULARY / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10088",
+        "mimic_subject_id": 10088,
+        "check": "max_dose_safety_limit",
+        "ndc_code": "00641-0400-25",
+        "verified": true,
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0047",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_connect",
+      "binary": "/usr/bin/billing_api",
+      "target": "payment-gw:443",
+      "port": 443,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-BILL-10088 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10088",
+        "mimic_subject_id": 10088,
+        "claim_id": "CLM-10088-36415",
+        "icd10": "N17.9",
+        "cpt_code": "36415",
+        "adfa_token": "42"
+      }
+    },
+    {
+      "record_id": "REC-0048",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/billing_api",
+      "target": "/data/icd10_codes.db",
+      "port": 0,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-ICD10 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10088",
+        "mimic_subject_id": 10088,
+        "lookup": "N17.9",
+        "description": "Acute kidney failure, unspecified",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0049",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/patient_records.json",
+      "port": 0,
+      "payload_size": 248,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#3 / MIMIC-ICU-10093",
+      "params": {
+        "patient_id": "PT-10093",
+        "mimic_subject_id": 10093,
+        "query": "SELECT patient_history, notes FROM records WHERE subject_id=10093",
+        "actor": "dr_evans@hospital.local",
+        "diagnosis": "Gastro-esophageal reflux disease without esophagitis",
+        "icd10": "K21.9",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0050",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_openat",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/lab_results_k21.9.json",
+      "port": 0,
+      "payload_size": 184,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#295 / MIMIC-LABS-10093",
+      "params": {
+        "patient_id": "PT-10093",
+        "mimic_subject_id": 10093,
+        "query": "GET /api/v1/lab_results/chemistry?subject=10093",
+        "actor": "nurse_patel@hospital.local",
+        "adfa_token": "295"
+      }
+    },
+    {
+      "record_id": "REC-0051",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_recvfrom",
+      "binary": "/app/vitals_collector",
+      "target": "icu-bedside:9002",
+      "port": 9002,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10093#V1 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10093",
+        "mimic_subject_id": 10093,
+        "heart_rate": 74,
+        "bp_systolic": 116,
+        "bp_diastolic": 74,
+        "spo2": 99.1,
+        "respiration_rate": 14,
+        "channel": "ecg_lead_ii",
+        "adfa_token": "102"
+      }
+    },
+    {
+      "record_id": "REC-0052",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/app/vitals_collector",
+      "target": "/data/vitals_timeseries.dat",
+      "port": 0,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10093#V2 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10093",
+        "mimic_subject_id": 10093,
+        "temperature_c": 36.6,
+        "spo2": 99.1,
+        "batch_records": 1,
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0053",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/dev/ttyUSB0",
+      "port": 0,
+      "payload_size": 32,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-RX-10093 / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10093",
+        "mimic_subject_id": 10093,
+        "drug_name": "Pantoprazole Sodium",
+        "ndc_code": "00008-0923-02",
+        "dosage": "40 mg IV daily",
+        "route": "IV",
+        "pump_id": "PUMP-07",
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0054",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/data/drug_formulary.json",
+      "port": 0,
+      "payload_size": 96,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-FORMULARY / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10093",
+        "mimic_subject_id": 10093,
+        "check": "max_dose_safety_limit",
+        "ndc_code": "00008-0923-02",
+        "verified": true,
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0055",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_connect",
+      "binary": "/usr/bin/billing_api",
+      "target": "payment-gw:443",
+      "port": 443,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-BILL-10093 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10093",
+        "mimic_subject_id": 10093,
+        "claim_id": "CLM-10093-99231",
+        "icd10": "K21.9",
+        "cpt_code": "99231",
+        "adfa_token": "42"
+      }
+    },
+    {
+      "record_id": "REC-0056",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/billing_api",
+      "target": "/data/icd10_codes.db",
+      "port": 0,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-ICD10 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10093",
+        "mimic_subject_id": 10093,
+        "lookup": "K21.9",
+        "description": "Gastro-esophageal reflux disease without esophagitis",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0057",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/patient_records.json",
+      "port": 0,
+      "payload_size": 248,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#3 / MIMIC-ICU-10114",
+      "params": {
+        "patient_id": "PT-10114",
+        "mimic_subject_id": 10114,
+        "query": "SELECT patient_history, notes FROM records WHERE subject_id=10114",
+        "actor": "dr_evans@hospital.local",
+        "diagnosis": "Sepsis, unspecified organism",
+        "icd10": "A41.9",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0058",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_openat",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/lab_results_a41.9.json",
+      "port": 0,
+      "payload_size": 184,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#295 / MIMIC-LABS-10114",
+      "params": {
+        "patient_id": "PT-10114",
+        "mimic_subject_id": 10114,
+        "query": "GET /api/v1/lab_results/chemistry?subject=10114",
+        "actor": "nurse_patel@hospital.local",
+        "adfa_token": "295"
+      }
+    },
+    {
+      "record_id": "REC-0059",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_recvfrom",
+      "binary": "/app/vitals_collector",
+      "target": "icu-bedside:9002",
+      "port": 9002,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10114#V1 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10114",
+        "mimic_subject_id": 10114,
+        "heart_rate": 96,
+        "bp_systolic": 104,
+        "bp_diastolic": 62,
+        "spo2": 96.0,
+        "respiration_rate": 24,
+        "channel": "ecg_lead_ii",
+        "adfa_token": "102"
+      }
+    },
+    {
+      "record_id": "REC-0060",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/app/vitals_collector",
+      "target": "/data/vitals_timeseries.dat",
+      "port": 0,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10114#V2 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10114",
+        "mimic_subject_id": 10114,
+        "temperature_c": 38.6,
+        "spo2": 96.0,
+        "batch_records": 1,
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0061",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/dev/ttyUSB0",
+      "port": 0,
+      "payload_size": 32,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-RX-10114 / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10114",
+        "mimic_subject_id": 10114,
+        "drug_name": "Vancomycin HCl",
+        "ndc_code": "00409-4332-01",
+        "dosage": "1000 mg in 250ml IV",
+        "route": "IV Infusion",
+        "pump_id": "PUMP-08",
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0062",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/data/drug_formulary.json",
+      "port": 0,
+      "payload_size": 96,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-FORMULARY / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10114",
+        "mimic_subject_id": 10114,
+        "check": "max_dose_safety_limit",
+        "ndc_code": "00409-4332-01",
+        "verified": true,
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0063",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_connect",
+      "binary": "/usr/bin/billing_api",
+      "target": "payment-gw:443",
+      "port": 443,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-BILL-10114 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10114",
+        "mimic_subject_id": 10114,
+        "claim_id": "CLM-10114-99291",
+        "icd10": "A41.9",
+        "cpt_code": "99291",
+        "adfa_token": "42"
+      }
+    },
+    {
+      "record_id": "REC-0064",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/billing_api",
+      "target": "/data/icd10_codes.db",
+      "port": 0,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-ICD10 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10114",
+        "mimic_subject_id": 10114,
+        "lookup": "A41.9",
+        "description": "Sepsis, unspecified organism",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0065",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/patient_records.json",
+      "port": 0,
+      "payload_size": 248,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#3 / MIMIC-ICU-10125",
+      "params": {
+        "patient_id": "PT-10125",
+        "mimic_subject_id": 10125,
+        "query": "SELECT patient_history, notes FROM records WHERE subject_id=10125",
+        "actor": "dr_evans@hospital.local",
+        "diagnosis": "Hypokalemia",
+        "icd10": "E87.6",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0066",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_openat",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/lab_results_e87.6.json",
+      "port": 0,
+      "payload_size": 184,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#295 / MIMIC-LABS-10125",
+      "params": {
+        "patient_id": "PT-10125",
+        "mimic_subject_id": 10125,
+        "query": "GET /api/v1/lab_results/chemistry?subject=10125",
+        "actor": "nurse_patel@hospital.local",
+        "adfa_token": "295"
+      }
+    },
+    {
+      "record_id": "REC-0067",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_recvfrom",
+      "binary": "/app/vitals_collector",
+      "target": "icu-bedside:9002",
+      "port": 9002,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10125#V1 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10125",
+        "mimic_subject_id": 10125,
+        "heart_rate": 79,
+        "bp_systolic": 126,
+        "bp_diastolic": 78,
+        "spo2": 98.0,
+        "respiration_rate": 16,
+        "channel": "ecg_lead_ii",
+        "adfa_token": "102"
+      }
+    },
+    {
+      "record_id": "REC-0068",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/app/vitals_collector",
+      "target": "/data/vitals_timeseries.dat",
+      "port": 0,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10125#V2 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10125",
+        "mimic_subject_id": 10125,
+        "temperature_c": 36.9,
+        "spo2": 98.0,
+        "batch_records": 1,
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0069",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/dev/ttyUSB0",
+      "port": 0,
+      "payload_size": 32,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-RX-10125 / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10125",
+        "mimic_subject_id": 10125,
+        "drug_name": "Potassium Chloride",
+        "ndc_code": "00409-6651-06",
+        "dosage": "20 mEq IV Piggyback",
+        "route": "IV Infusion",
+        "pump_id": "PUMP-09",
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0070",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/data/drug_formulary.json",
+      "port": 0,
+      "payload_size": 96,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-FORMULARY / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10125",
+        "mimic_subject_id": 10125,
+        "check": "max_dose_safety_limit",
+        "ndc_code": "00409-6651-06",
+        "verified": true,
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0071",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_connect",
+      "binary": "/usr/bin/billing_api",
+      "target": "payment-gw:443",
+      "port": 443,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-BILL-10125 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10125",
+        "mimic_subject_id": 10125,
+        "claim_id": "CLM-10125-80053",
+        "icd10": "E87.6",
+        "cpt_code": "80053",
+        "adfa_token": "42"
+      }
+    },
+    {
+      "record_id": "REC-0072",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/billing_api",
+      "target": "/data/icd10_codes.db",
+      "port": 0,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-ICD10 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10125",
+        "mimic_subject_id": 10125,
+        "lookup": "E87.6",
+        "description": "Hypokalemia",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0073",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/patient_records.json",
+      "port": 0,
+      "payload_size": 248,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#3 / MIMIC-ICU-10137",
+      "params": {
+        "patient_id": "PT-10137",
+        "mimic_subject_id": 10137,
+        "query": "SELECT patient_history, notes FROM records WHERE subject_id=10137",
+        "actor": "dr_evans@hospital.local",
+        "diagnosis": "Presence of aortocoronary bypass graft",
+        "icd10": "Z95.1",
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0074",
+      "pod_name": "ehr",
+      "namespace": "medical",
+      "syscall_name": "sys_openat",
+      "binary": "/usr/local/bin/gunicorn",
+      "target": "/data/lab_results_z95.1.json",
+      "port": 0,
+      "payload_size": 184,
+      "dataset_source": "ADFA-LD (UNSW Canberra) & MIMIC-III (MIT)",
+      "benchmark_ref": "ADFA-UTD-0042#295 / MIMIC-LABS-10137",
+      "params": {
+        "patient_id": "PT-10137",
+        "mimic_subject_id": 10137,
+        "query": "GET /api/v1/lab_results/chemistry?subject=10137",
+        "actor": "nurse_patel@hospital.local",
+        "adfa_token": "295"
+      }
+    },
+    {
+      "record_id": "REC-0075",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_recvfrom",
+      "binary": "/app/vitals_collector",
+      "target": "icu-bedside:9002",
+      "port": 9002,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10137#V1 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10137",
+        "mimic_subject_id": 10137,
+        "heart_rate": 70,
+        "bp_systolic": 120,
+        "bp_diastolic": 76,
+        "spo2": 98.7,
+        "respiration_rate": 15,
+        "channel": "ecg_lead_ii",
+        "adfa_token": "102"
+      }
+    },
+    {
+      "record_id": "REC-0076",
+      "pod_name": "vitals",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/app/vitals_collector",
+      "target": "/data/vitals_timeseries.dat",
+      "port": 0,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Chartevents (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-CHART-10137#V2 / ADFA-UTD-0089",
+      "params": {
+        "patient_id": "PT-10137",
+        "mimic_subject_id": 10137,
+        "temperature_c": 36.8,
+        "spo2": 98.7,
+        "batch_records": 1,
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0077",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_write",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/dev/ttyUSB0",
+      "port": 0,
+      "payload_size": 32,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-RX-10137 / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10137",
+        "mimic_subject_id": 10137,
+        "drug_name": "Atorvastatin Calcium",
+        "ndc_code": "00071-0156-23",
+        "dosage": "40 mg PO nightly",
+        "route": "Oral",
+        "pump_id": "PUMP-10",
+        "adfa_token": "4"
+      }
+    },
+    {
+      "record_id": "REC-0078",
+      "pod_name": "drug-dispenser",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/dispenser_srv",
+      "target": "/data/drug_formulary.json",
+      "port": 0,
+      "payload_size": 96,
+      "dataset_source": "MIMIC-III Prescriptions & NDC Formulary (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-FORMULARY / ADFA-UTD-0115",
+      "params": {
+        "patient_id": "PT-10137",
+        "mimic_subject_id": 10137,
+        "check": "max_dose_safety_limit",
+        "ndc_code": "00071-0156-23",
+        "verified": true,
+        "adfa_token": "3"
+      }
+    },
+    {
+      "record_id": "REC-0079",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_connect",
+      "binary": "/usr/bin/billing_api",
+      "target": "payment-gw:443",
+      "port": 443,
+      "payload_size": 128,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-BILL-10137 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10137",
+        "mimic_subject_id": 10137,
+        "claim_id": "CLM-10137-99233",
+        "icd10": "Z95.1",
+        "cpt_code": "99233",
+        "adfa_token": "42"
+      }
+    },
+    {
+      "record_id": "REC-0080",
+      "pod_name": "billing",
+      "namespace": "medical",
+      "syscall_name": "sys_read",
+      "binary": "/usr/bin/billing_api",
+      "target": "/data/icd10_codes.db",
+      "port": 0,
+      "payload_size": 64,
+      "dataset_source": "MIMIC-III Diagnoses & ICD-10 (MIT PhysioNet)",
+      "benchmark_ref": "MIMIC-ICD10 / ADFA-UTD-0258",
+      "params": {
+        "patient_id": "PT-10137",
+        "mimic_subject_id": 10137,
+        "lookup": "Z95.1",
+        "description": "Presence of aortocoronary bypass graft",
+        "adfa_token": "3"
+      }
+    }
+  ]
+}

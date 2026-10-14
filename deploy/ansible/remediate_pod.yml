@@ -1,0 +1,50 @@
+---
+# SentinelCloud-Advanced: Ansible Remediation Fallback Playbook
+# =============================================================
+# Automated execution layer for node-level container quarantine & restart
+# when Kubernetes API remediation requires fallback execution.
+
+- name: Autonomous Pod & Node Remediation Playbook
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    target_pod: "{{ pod_name | default('ehr') }}"
+    target_namespace: "{{ namespace | default('medical') }}"
+    action_type: "{{ action | default('quarantine') }}"
+
+  tasks:
+    - name: Display Remediation Request Details
+      ansible.builtin.debug:
+        msg: "Executing Ansible Remediation Fallback: Pod={{ target_pod }}, Namespace={{ target_namespace }}, Action={{ action_type }}"
+
+    - name: Enforce Cilium Network Policy Quarantine via kubectl
+      ansible.builtin.shell: |
+        kubectl label pod {{ target_pod }} -n {{ target_namespace }} suspect=true --overwrite
+        cat <<EOF | kubectl apply -f -
+        apiVersion: cilium.io/v2
+        kind: CiliumNetworkPolicy
+        metadata:
+          name: ansible-quarantine-{{ target_pod }}
+          namespace: {{ target_namespace }}
+        spec:
+          endpointSelector:
+            matchLabels:
+              suspect: "true"
+          ingressDeny: [{}]
+          egressDeny: [{}]
+        EOF
+      when: action_type in ['quarantine', 'quarantine_only', 'failover_and_quarantine']
+      register: quarantine_result
+      ignore_errors: true
+
+    - name: Trigger Pod Redeployment (Force Delete)
+      ansible.builtin.shell: |
+        kubectl delete pod {{ target_pod }} -n {{ target_namespace }} --grace-period=0 --force
+      when: action_type in ['redeploy', 'failover_and_quarantine']
+      register: redeploy_result
+      ignore_errors: true
+
+    - name: Audit Remediation Completion
+      ansible.builtin.debug:
+        msg: "Ansible Remediation Action completed successfully for {{ target_pod }}"

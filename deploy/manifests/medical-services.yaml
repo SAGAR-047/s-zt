@@ -1,0 +1,282 @@
+# Kubernetes Deployments & Services for Medical Microservices
+# Namespace: medical
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: medical
+  labels:
+    sentinel.io/monitored: "true"
+
+---
+# ==================== VITALS ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vitals
+  namespace: medical
+  labels:
+    app: vitals
+    critical: "true"
+    tier: medical
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: vitals
+  template:
+    metadata:
+      labels:
+        app: vitals
+        critical: "true"
+        tier: medical
+    spec:
+      containers:
+        - name: vitals
+          image: sentinelcloud/vitals:latest
+          ports:
+            - containerPort: 5000
+              name: http
+          env:
+            - name: PORT
+              value: "5000"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vitals
+  namespace: medical
+  labels:
+    app: vitals
+spec:
+  type: ClusterIP
+  selector:
+    app: vitals
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP
+      name: http
+
+---
+# ==================== DRUG-DISPENSER ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drug-dispenser
+  namespace: medical
+  labels:
+    app: drug-dispenser
+    critical: "true"
+    tier: medical
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: drug-dispenser
+  template:
+    metadata:
+      labels:
+        app: drug-dispenser
+        critical: "true"
+        tier: medical
+    spec:
+      containers:
+        - name: drug-dispenser
+          image: sentinelcloud/drug-dispenser:latest
+          ports:
+            - containerPort: 5001
+              name: http
+          env:
+            - name: PORT
+              value: "5001"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5001
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: drug-dispenser
+  namespace: medical
+  labels:
+    app: drug-dispenser
+spec:
+  type: ClusterIP
+  selector:
+    app: drug-dispenser
+  ports:
+    - port: 5001
+      targetPort: 5001
+      protocol: TCP
+      name: http
+
+---
+# ==================== EHR ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ehr
+  namespace: medical
+  labels:
+    app: ehr
+    tier: medical
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ehr
+  template:
+    metadata:
+      labels:
+        app: ehr
+        tier: medical
+    spec:
+      containers:
+        - name: ehr
+          image: sentinelcloud/ehr:latest
+          ports:
+            - containerPort: 5002
+              name: http
+          env:
+            - name: PORT
+              value: "5002"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5002
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5002
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ehr
+  namespace: medical
+  labels:
+    app: ehr
+spec:
+  type: ClusterIP
+  selector:
+    app: ehr
+  ports:
+    - port: 5002
+      targetPort: 5002
+      protocol: TCP
+      name: http
+
+---
+# ==================== BILLING ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing
+  namespace: medical
+  labels:
+    app: billing
+    tier: medical
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: billing
+  template:
+    metadata:
+      labels:
+        app: billing
+        tier: medical
+    spec:
+      containers:
+        - name: billing
+          image: sentinelcloud/billing:latest
+          ports:
+            - containerPort: 5003
+              name: http
+          env:
+            - name: PORT
+              value: "5003"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5003
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5003
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: billing
+  namespace: medical
+  labels:
+    app: billing
+spec:
+  type: ClusterIP
+  selector:
+    app: billing
+  ports:
+    - port: 5003
+      targetPort: 5003
+      protocol: TCP
+      name: http

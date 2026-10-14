@@ -1,0 +1,73 @@
+{{- $ns := .Values.orchestrator.namespace }}
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sentinel-controller
+  namespace: {{ $ns }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sentinel-controller-role
+rules:
+  - apiGroups: ["sentinel.io"]
+    resources: ["securityalerts", "securityalerts/status"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "delete", "patch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/scale", "replicasets"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["cilium.io"]
+    resources: ["ciliumnetworkpolicies"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sentinel-controller-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sentinel-controller-role
+subjects:
+  - kind: ServiceAccount
+    name: sentinel-controller
+    namespace: {{ $ns }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sentinel-intelligence
+  namespace: {{ $ns }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: sentinel-intelligence-role
+rules:
+  - apiGroups: ["sentinel.io"]
+    resources: ["securityalerts"]
+    verbs: ["get", "list", "create", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: sentinel-intelligence-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: sentinel-intelligence-role
+subjects:
+  - kind: ServiceAccount
+    name: sentinel-intelligence
+    namespace: {{ $ns }}

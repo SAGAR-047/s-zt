@@ -1,0 +1,32 @@
+# SentinelCloud-Advanced: Falco MITRE ATT&CK Threat Rules
+# =======================================================
+
+- rule: Terminal Shell Executed in Medical Container
+  desc: Detect interactive shell execution inside medical microservice pods (MITRE ATT&CK T1059)
+  condition: >
+    spawned_process and container and container.profile.name startswith "medical"
+    and proc.name in (sh, bash, zsh, dash)
+  output: >
+    MITRE T1059 Shell Execution (user=%user.name pod=%container.name image=%container.image.repository process=%proc.name cmd=%proc.cmdline)
+  priority: WARNING
+  tags: [mitre_execution, mitre_t1059, container, medical]
+
+- rule: SMB Port Connection Attempt
+  desc: Detect lateral movement attempts on port 445 (MITRE ATT&CK T1021.002)
+  condition: >
+    outbound and fd.l4proto = tcp and fd.sport = 445 or fd.dport = 445
+    and container.profile.name startswith "medical"
+  output: >
+    MITRE T1021.002 SMB Connection Attempt (pod=%container.name src=%fd.cip dst=%fd.rip port=%fd.dport)
+  priority: CRITICAL
+  tags: [mitre_lateral_movement, mitre_t1021, smb]
+
+- rule: Ransomware File Encryption Activity
+  desc: Detect bulk file rename operations with encrypted extensions (MITRE ATT&CK T1486)
+  condition: >
+    evt.type = rename and evt.dir = < and container.profile.name startswith "medical"
+    and (evt.arg.newpath endswith ".locked" or evt.arg.newpath endswith ".crypto")
+  output: >
+    MITRE T1486 Ransomware File Encryption (pod=%container.name oldfile=%evt.arg.oldpath newfile=%evt.arg.newpath)
+  priority: EMERGENCY
+  tags: [mitre_impact, mitre_t1486, ransomware]
